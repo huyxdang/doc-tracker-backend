@@ -5,6 +5,7 @@ FastAPI application entry point.
 
 import time
 import hashlib
+from urllib.parse import quote
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -195,11 +196,15 @@ async def download_annotated_document(doc_id: str):
     if not doc_info:
         raise HTTPException(404, "Document not found. It may have expired.")
     
+    # URL-encode filename for non-ASCII characters (Vietnamese, etc.)
+    filename = doc_info['filename']
+    encoded_filename = quote(filename)
+    
     return Response(
         content=doc_info['bytes'],
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={
-            "Content-Disposition": f"attachment; filename={doc_info['filename']}"
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
         }
     )
     

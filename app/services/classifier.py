@@ -166,7 +166,10 @@ class LLMClassifier:
             llm_time_ms = int((time.time() - llm_start) * 1000)
             
             response_text = response.choices[0].message.content
-            return self._parse_response(response_text, changes), llm_time_ms
+            print(f"LLM response received in {llm_time_ms}ms: {response_text[:200]}...")
+            parsed_results = self._parse_response(response_text, changes)
+            print(f"Parsed {len(parsed_results)} classifications from LLM")
+            return parsed_results, llm_time_ms
             
         except Exception as e:
             print(f"LLM classification failed: {e}")
@@ -275,6 +278,7 @@ JSON array:"""
             parsed = json.loads(text)
         except json.JSONDecodeError as e:
             print(f"JSON parse error: {e}")
+            print(f"Raw LLM response: {response_text}")
             return {}
         
         impact_map = {
@@ -286,7 +290,10 @@ JSON array:"""
         
         results = {}
         for item in parsed:
+            # Handle both string and integer IDs from LLM
             change_id = item.get("id")
+            if change_id is not None:
+                change_id = int(change_id)  # Ensure integer for matching
             impact_str = item.get("impact", "medium").lower()
             impact = impact_map.get(impact_str, ImpactLevel.MEDIUM)
             
@@ -359,6 +366,7 @@ def classify_changes(
             if change.change_id in llm_results:
                 impact, reasoning, risk = llm_results[change.change_id]
             else:
+                print(f"Warning: change_id {change.change_id} not found in LLM results. Available: {list(llm_results.keys())}")
                 impact = ImpactLevel.MEDIUM
                 reasoning = "Không thể phân loại"
                 risk = "Cần xem xét thủ công"
