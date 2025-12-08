@@ -44,7 +44,6 @@ uvicorn app.main:app --reload
 | GET | `/` | Health check |
 | GET | `/health` | Deployment health check |
 | POST | `/api/compare` | Compare two documents |
-| GET | `/api/download/{id}` | Download annotated document |
 
 ## Classification Approach
 
